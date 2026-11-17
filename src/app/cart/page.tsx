@@ -3,42 +3,21 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCart } from "@/components/providers/cart-provider";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { Button } from "@/components/ui/button";
 
 export default function CartPage() {
+  const router = useRouter();
   const { items, totalQuantity, subtotal, updateQuantity, removeItem } =
     useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (items.length === 0) return;
     setIsCheckingOut(true);
-
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: items.map((item) => ({
-            variantId: item.variantId,
-            quantity: item.quantity,
-          })),
-        }),
-      });
-
-      const data = await res.json();
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      } else {
-        alert("Failed to initiate Shopify checkout. Please try again.");
-        setIsCheckingOut(false);
-      }
-    } catch {
-      alert("An error occurred during checkout. Please try again.");
-      setIsCheckingOut(false);
-    }
+    router.push("/checkout");
   };
 
   const freeShippingThreshold = 999;
@@ -256,18 +235,18 @@ export default function CartPage() {
                 </div>
 
                 {/* Checkout CTA Button */}
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="w-full"
-                  onClick={handleCheckout}
-                  disabled={isCheckingOut}
-                >
-                  {isCheckingOut ? "REDIRECTING..." : "PROCEED TO CHECKOUT ↗"}
-                </Button>
+                <Link href="/checkout" className="block w-full">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full"
+                  >
+                    PROCEED TO CHECKOUT ↗
+                  </Button>
+                </Link>
 
                 <p className="text-[10px] font-primary text-center text-sage-muted tracking-wider uppercase mt-4">
-                  Secure checkout processed by Shopify
+                  Secure Checkout • Free Shipping on Orders Over ₹999
                 </p>
               </div>
             </div>

@@ -9,7 +9,15 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "cdn.shopify.com",
+        hostname: "**.r2.dev",
+      },
+      {
+        protocol: "https",
+        hostname: "**.workers.dev",
+      },
+      {
+        protocol: "https",
+        hostname: "**.cloudflare.com",
       },
     ],
   },

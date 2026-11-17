@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getProductsPaginated } from "@/lib/shopify";
+import { getProductsPaginated } from "@/lib/api";
 import { ProductCard } from "@/components/shared/product-card";
 import { Button } from "@/components/ui/button";
 

@@ -7,7 +7,7 @@
 
 import Link from "next/link";
 import type { Product } from "@/types/product";
-import type { FeaturedSectionData } from "@/lib/shopify";
+import type { FeaturedSectionData } from "@/types/cms";
 import { ProductCard } from "@/components/shared/product-card";
 import { Button } from "@/components/ui/button";
 

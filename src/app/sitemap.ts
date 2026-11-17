@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getProducts, getCollections } from "@/lib/shopify";
+import { getProducts, getCollections } from "@/lib/api";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl =

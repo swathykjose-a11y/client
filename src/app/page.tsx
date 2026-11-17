@@ -5,7 +5,7 @@ import {
   getEditorialBanner,
   getStorySection,
   getBottomBanner,
-} from "@/lib/shopify";
+} from "@/lib/api";
 import { HeroSection } from "@/components/sections/home/hero-section";
 import { FeaturedCollectionsSection } from "@/components/sections/home/featured-collections-section";
 import { EditorialBanner } from "@/components/sections/home/editorial-banner";

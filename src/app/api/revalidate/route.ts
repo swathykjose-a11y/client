@@ -1,51 +1,47 @@
-import { revalidatePath } from "next/cache";
-import { NextResponse } from "next/server";
-import crypto from "crypto";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { NextRequest, NextResponse } from "next/server";
 
-const SHOPIFY_WEBHOOK_SECRET = process.env.SHOPIFY_WEBHOOK_SECRET;
+const REVALIDATION_SECRET =
+  process.env.REVALIDATION_SECRET || process.env.ADMIN_API_SECRET;
 
-// Verify Shopify webhook HMAC signature
-async function verifyWebhook(
-  body: string,
-  hmacHeader: string | null,
-): Promise<boolean> {
-  if (!SHOPIFY_WEBHOOK_SECRET || !hmacHeader) return false;
-
-  const digest = crypto
-    .createHmac("sha256", SHOPIFY_WEBHOOK_SECRET)
-    .update(body, "utf-8")
-    .digest("base64");
-
-  return crypto.timingSafeEqual(
-    Buffer.from(digest),
-    Buffer.from(hmacHeader),
-  );
-}
-
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const rawBody = await request.text();
-    const hmac = request.headers.get("x-shopify-hmac-sha256");
+    const authHeader = request.headers.get("authorization");
+    const token =
+      authHeader?.replace(/^Bearer\s+/i, "") ||
+      request.nextUrl.searchParams.get("secret");
 
-    // Verify the webhook came from Shopify
-    const isValid = await verifyWebhook(rawBody, hmac);
-
-    if (!isValid) {
-      console.error("Invalid webhook signature");
+    if (REVALIDATION_SECRET && token !== REVALIDATION_SECRET) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const topic = request.headers.get("x-shopify-topic");
-    console.log(`[Revalidate] Received webhook: ${topic}`);
+    let paths: string[] = ["/", "/products"];
+    let tags: string[] = [];
 
-    // Revalidate all product and collection pages
-    revalidatePath("/", "layout");
-    revalidatePath("/products/[handle]", "page");
-    revalidatePath("/collections/[handle]", "page");
+    try {
+      const body = await request.json();
+      if (body?.paths && Array.isArray(body.paths)) {
+        paths = body.paths;
+      }
+      if (body?.tags && Array.isArray(body.tags)) {
+        tags = body.tags;
+      }
+    } catch {
+      // Body is optional
+    }
+
+    for (const p of paths) {
+      revalidatePath(p);
+    }
+
+    for (const t of tags) {
+      revalidateTag(t);
+    }
 
     return NextResponse.json({
       revalidated: true,
-      topic,
+      paths,
+      tags,
       now: Date.now(),
     });
   } catch (error) {

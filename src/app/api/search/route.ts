@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { searchProducts } from "@/lib/shopify";
+import { searchProducts } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 

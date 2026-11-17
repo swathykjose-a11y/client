@@ -28,8 +28,8 @@ export interface PaginatedProducts {
 }
 
 const API_BASE_URL =
+  process.env.SERVER_URL ||
   process.env.API_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
   "";
 
 async function fetchFromApi<T>(

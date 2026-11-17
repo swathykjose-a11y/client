@@ -1,6 +1,5 @@
 // ─── Local Policy Content ────────────────────────────────────────────────────
 // Dropshipping-specific policies for Dainty Dazzle.
-// These serve as the primary source; Shopify policies are a fallback.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface PolicyData {
@@ -277,7 +276,7 @@ const privacyPolicy: PolicyData = {
 <ul>
   <li><strong>Fulfilment partners &amp; suppliers:</strong> Your name, shipping address, and order details are shared with our third-party suppliers so they can package and ship your products directly to you.</li>
   <li><strong>Shipping carriers:</strong> Your delivery address and contact information are shared with logistics providers for delivery purposes.</li>
-  <li><strong>Payment processors:</strong> Your payment information is securely processed by third-party payment gateways (e.g., Shopify Payments, Razorpay, or similar services).</li>
+  <li><strong>Payment processors:</strong> Your payment information is securely processed by third-party payment gateways (e.g., Razorpay, UPI, Cash on Delivery, or similar secure payment gateways).</li>
   <li><strong>Analytics providers:</strong> We may use analytics tools (such as Google Analytics) that collect anonymised data about website usage.</li>
   <li><strong>Legal authorities:</strong> If required by law, court order, or governmental request.</li>
 </ul>

@@ -1,20 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocalPolicies, getLocalPolicyBySlug } from "@/lib/policies";
-import { getPolicyBySlug as getShopifyPolicyBySlug } from "@/lib/shopify";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-// ─── Resolve policy: local first, Shopify fallback ──────────────────────────
+// ─── Resolve policy ─────────────────────────────────────────────────────────
 
-async function resolvePolicy(slug: string) {
-  const local = getLocalPolicyBySlug(slug);
-  if (local) return local;
-
-  // Fallback to Shopify if local content is not available for this slug
-  const shopify = await getShopifyPolicyBySlug(slug);
-  return shopify;
+function resolvePolicy(slug: string) {
+  return getLocalPolicyBySlug(slug);
 }
 
 // ─── Static params ──────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { getProductByHandle, getProducts } from "@/lib/shopify";
+import { getProductByHandle, getProducts } from "@/lib/api";
 import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { AddToCartButton } from "./add-to-cart-button";
 

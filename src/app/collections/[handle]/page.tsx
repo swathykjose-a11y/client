@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCollectionByHandle, getCollections } from "@/lib/shopify";
+import { getCollectionByHandle, getCollections } from "@/lib/api";
 import {
   CollectionJsonLd,
   BreadcrumbJsonLd,

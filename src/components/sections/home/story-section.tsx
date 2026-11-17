@@ -8,7 +8,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import type { StorySectionData } from "@/lib/shopify";
+import type { StorySectionData } from "@/types/cms";
 
 interface StorySectionProps {
   storyData?: StorySectionData | null;

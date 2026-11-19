@@ -1,5 +1,7 @@
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL || "https://daintydazzle.store"
+  process.env.SITE_URL ||
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  "https://daintydazzle.store"
 ).replace(/\/+$/, "");
 
 export const SITE_NAME = "Dainty Dazzle Jewelry";

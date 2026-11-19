@@ -6,8 +6,9 @@ import {
   BreadcrumbJsonLd,
 } from "@/components/seo/json-ld";
 import { ProductCard } from "@/components/shared/product-card";
+import { SITE_URL } from "@/lib/constants";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const siteUrl = SITE_URL;
 
 export const revalidate = 0;
 

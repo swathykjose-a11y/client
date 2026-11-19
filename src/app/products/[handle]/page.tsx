@@ -4,8 +4,9 @@ import Image from "next/image";
 import { getProductByHandle, getProducts } from "@/lib/api";
 import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/json-ld";
 import { AddToCartButton } from "./add-to-cart-button";
+import { SITE_URL } from "@/lib/constants";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const siteUrl = SITE_URL;
 
 export const revalidate = 0;
 

@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getLocalPolicies, getLocalPolicyBySlug } from "@/lib/policies";
 import { BreadcrumbJsonLd } from "@/components/seo/json-ld";
+import { SITE_URL } from "@/lib/constants";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const siteUrl = SITE_URL;
 
 // ─── Resolve policy ─────────────────────────────────────────────────────────
 

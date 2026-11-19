@@ -4,6 +4,7 @@
 
 import type { Product } from "@/types/product";
 import type { Collection } from "@/types/collection";
+import { SUPPORT_EMAIL, INSTAGRAM_URL } from "@/lib/constants";
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 
@@ -27,17 +28,15 @@ export function OrganizationJsonLd({ siteUrl }: { siteUrl: string }) {
         name: "Dainty Dazzle Jewelry",
         alternateName: "Dainty Dazzle",
         url: siteUrl,
-        // TODO: Replace with actual logo URL once added to /public
-        logo: `${siteUrl}/logo.png`,
+        logo: `${siteUrl}/icon.svg`,
         description:
           "True beauty shines from within. Shop handcrafted earrings and necklaces designed for everyday elegance.",
         contactPoint: {
           "@type": "ContactPoint",
-          email: "hello@daintydazzle.com",
+          email: SUPPORT_EMAIL,
           contactType: "customer service",
         },
-        // TODO: Add social profile URLs here once available
-        sameAs: [],
+        sameAs: [INSTAGRAM_URL],
       }}
     />
   );

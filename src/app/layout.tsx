@@ -10,6 +10,7 @@ import {
   OrganizationJsonLd,
   WebSiteJsonLd,
 } from "@/components/seo/json-ld";
+import { SITE_URL } from "@/lib/constants";
 import "./globals.css";
 
 const geist = Geist({
@@ -31,7 +32,7 @@ const overusedGrotesk = localFont({
   weight: "300 900",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const siteUrl = SITE_URL;
 
 export const metadata: Metadata = {
   title: {

@@ -111,8 +111,10 @@ export default function CheckoutPage() {
       <section className="py-16 md:py-24 bg-sage-canvas min-h-[80vh]">
         <div className="w-full max-w-2xl mx-auto px-4 sm:px-6">
           <div className="bg-card-white border border-sage-border/60 p-8 sm:p-12 text-center rounded-xs shadow-xs animate-fade-in-up">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-sage-border/30 flex items-center justify-center text-charcoal text-2xl font-secondary">
-              ✓
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-sage-border/30 flex items-center justify-center text-charcoal">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+              </svg>
             </div>
 
             <span className="text-[10px] font-primary font-medium uppercase tracking-[0.25em] text-sage-muted mb-2 block">

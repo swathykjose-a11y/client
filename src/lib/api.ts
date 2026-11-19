@@ -27,10 +27,7 @@ export interface PaginatedProducts {
   };
 }
 
-const API_BASE_URL =
-  process.env.SERVER_URL ||
-  process.env.API_URL ||
-  "";
+const API_BASE_URL = process.env.SERVER_URL || "";
 
 async function fetchFromApi<T>(
   path: string,

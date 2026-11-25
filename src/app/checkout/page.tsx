@@ -6,7 +6,8 @@ import Image from "next/image";
 import { useCart } from "@/components/providers/cart-provider";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { Button } from "@/components/ui/button";
-import type { Order, PaymentMethod, ShippingAddress } from "@/types/order";
+import { STORE_UPI } from "@/lib/store-payment";
+import type { Order, ShippingAddress, UpiPaymentInstructions } from "@/types/order";
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart();
@@ -24,10 +25,10 @@ export default function CheckoutPage() {
     country: "India",
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [placedOrder, setPlacedOrder] = useState<Order | null>(null);
+  const [upiPayment, setUpiPayment] = useState<UpiPaymentInstructions | null>(null);
 
   const shippingFee = subtotal >= 999 || items.length === 0 ? 0 : 99;
   const grandTotal = subtotal + shippingFee;
@@ -80,7 +81,7 @@ export default function CheckoutPage() {
         subtotal,
         shippingFee,
         total: grandTotal,
-        paymentMethod,
+        paymentMethod: "upi",
       };
 
       const res = await fetch("/api/checkout", {
@@ -96,6 +97,7 @@ export default function CheckoutPage() {
       }
 
       setPlacedOrder(data.order);
+      setUpiPayment(data.payment ?? null);
       clearCart();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
@@ -118,20 +120,19 @@ export default function CheckoutPage() {
             </div>
 
             <span className="text-[10px] font-primary font-medium uppercase tracking-[0.25em] text-sage-muted mb-2 block">
-              Order Confirmed
+              Pay by UPI
             </span>
 
             <h1 className="font-secondary text-3xl sm:text-4xl text-charcoal mb-3">
-              Thank You for Your Order!
+              Complete your payment
             </h1>
 
             <p className="text-xs sm:text-sm font-primary text-sage-muted leading-relaxed mb-6">
-              Your order{" "}
+              Order{" "}
               <strong className="text-charcoal font-medium">
                 #{placedOrder.orderNumber}
               </strong>{" "}
-              has been placed successfully. A confirmation email has been sent
-              to <strong className="text-charcoal">{placedOrder.customer.email}</strong>.
+              is reserved. We dispatch it only after this UPI payment arrives. Cash on delivery is not available.
             </p>
 
             <div className="bg-sage-canvas/70 border border-sage-border/40 p-4 sm:p-6 text-left mb-8 rounded-xs text-xs font-primary space-y-2">
@@ -153,11 +154,27 @@ export default function CheckoutPage() {
                 </span>
               </div>
               <div className="flex justify-between border-b border-sage-border/30 pb-2">
-                <span className="text-sage-muted">Payment:</span>
-                <span className="text-charcoal font-medium uppercase">
-                  {placedOrder.paymentMethod === "cod"
-                    ? "Cash on Delivery (COD)"
-                    : "Online Payment"}
+                <span className="text-sage-muted">Pay to:</span>
+                <span className="text-charcoal text-right font-medium">
+                  {upiPayment?.payeeName || STORE_UPI.payeeName}
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-sage-border/30 pb-2">
+                <span className="text-sage-muted">UPI ID:</span>
+                <span className="text-charcoal text-right font-medium">
+                  {upiPayment?.vpa || STORE_UPI.vpa}
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-sage-border/30 pb-2">
+                <span className="text-sage-muted">Phone:</span>
+                <span className="text-charcoal text-right font-medium">
+                  {upiPayment?.phone || STORE_UPI.phone}
+                </span>
+              </div>
+              <div className="flex justify-between border-b border-sage-border/30 pb-2">
+                <span className="text-sage-muted">Payment note:</span>
+                <span className="text-charcoal text-right font-medium">
+                  {upiPayment?.note || `Dainty Dazzle ${placedOrder.orderNumber}`}
                 </span>
               </div>
               <div className="flex justify-between pt-1">
@@ -170,9 +187,18 @@ export default function CheckoutPage() {
               </div>
             </div>
 
+            {upiPayment?.upiUri ? (
+              <a
+                href={upiPayment.upiUri}
+                className="inline-flex mb-6 text-xs font-primary uppercase tracking-wider text-charcoal underline underline-offset-4"
+              >
+                Open UPI app to pay
+              </a>
+            ) : null}
+
             <p className="text-[11px] font-primary text-sage-muted mb-8">
-              Estimated delivery: 5–7 business days. You will receive SMS & email
-              updates with tracking details once dispatched.
+              Use the phone number or UPI ID above. Put the order number in the payment note.
+              Estimated delivery after payment is confirmed: 5–7 business days.
             </p>
 
             <Link href="/products">
@@ -392,56 +418,16 @@ export default function CheckoutPage() {
                   3. Payment Method
                 </h2>
 
-                <div className="space-y-3">
-                  <label
-                    className={`flex items-start gap-3 p-4 border rounded-xs cursor-pointer transition-colors ${
-                      paymentMethod === "cod"
-                        ? "border-charcoal bg-sage-canvas/30"
-                        : "border-sage-border/60 hover:border-sage-border"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="cod"
-                      checked={paymentMethod === "cod"}
-                      onChange={() => setPaymentMethod("cod")}
-                      className="mt-0.5"
-                    />
-                    <div>
-                      <div className="text-xs font-primary font-medium text-charcoal">
-                        Cash on Delivery (COD)
-                      </div>
-                      <div className="text-[11px] font-primary text-sage-muted mt-0.5">
-                        Pay with cash or UPI directly when your order is delivered to your doorstep.
-                      </div>
-                    </div>
-                  </label>
-
-                  <label
-                    className={`flex items-start gap-3 p-4 border rounded-xs cursor-pointer transition-colors ${
-                      paymentMethod === "online"
-                        ? "border-charcoal bg-sage-canvas/30"
-                        : "border-sage-border/60 hover:border-sage-border"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="online"
-                      checked={paymentMethod === "online"}
-                      onChange={() => setPaymentMethod("online")}
-                      className="mt-0.5"
-                    />
-                    <div>
-                      <div className="text-xs font-primary font-medium text-charcoal">
-                        Online Payment / UPI / Cards
-                      </div>
-                      <div className="text-[11px] font-primary text-sage-muted mt-0.5">
-                        Secure instant payment gateway for UPI, debit/credit cards, and net banking.
-                      </div>
-                    </div>
-                  </label>
+                <div className="border border-charcoal bg-sage-canvas/30 p-4 rounded-xs space-y-2">
+                  <div className="text-xs font-primary font-medium text-charcoal">
+                    UPI to {STORE_UPI.payeeName}
+                  </div>
+                  <p className="text-[11px] font-primary text-sage-muted leading-relaxed">
+                    Pay from any UPI app to phone{" "}
+                    <span className="text-charcoal font-medium">{STORE_UPI.phone}</span> or UPI ID{" "}
+                    <span className="text-charcoal font-medium">{STORE_UPI.vpa}</span>.
+                    Cash on delivery is not available. We ship after the payment shows on this number.
+                  </p>
                 </div>
               </div>
             </div>
@@ -522,7 +508,7 @@ export default function CheckoutPage() {
                 disabled={isSubmitting}
                 className="w-full"
               >
-                {isSubmitting ? "PROCESSING..." : "CONFIRM & PLACE ORDER ↗"}
+                {isSubmitting ? "PROCESSING..." : "PLACE ORDER & PAY BY UPI ↗"}
               </Button>
 
               <p className="text-[10px] font-primary text-center text-sage-muted tracking-wider uppercase">

@@ -16,7 +16,17 @@ export interface ShippingAddress {
   country: string;
 }
 
-export type PaymentMethod = "cod" | "online" | "upi";
+export type PaymentMethod = "upi";
+
+export interface UpiPaymentInstructions {
+  payeeName: string;
+  vpa: string;
+  phone: string;
+  amount: number;
+  currency: "INR";
+  note: string;
+  upiUri: string;
+}
 
 export type OrderStatus =
   | "pending"

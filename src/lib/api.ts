@@ -6,7 +6,7 @@ import type {
   EditorialBannerData,
   StorySectionData,
 } from "@/types/cms";
-import type { CreateOrderPayload, Order } from "@/types/order";
+import type { CreateOrderPayload, Order, UpiPaymentInstructions } from "@/types/order";
 import {
   MOCK_PRODUCTS,
   MOCK_COLLECTIONS,
@@ -231,42 +231,30 @@ export async function getBottomBanner(): Promise<EditorialBannerData | null> {
 
 export async function createOrder(
   payload: CreateOrderPayload,
-): Promise<{ success: boolean; order: Order; message?: string }> {
-  if (API_BASE_URL) {
-    try {
-      const res = await fetch(`${API_BASE_URL.replace(/\/+$/, "")}/api/orders`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        const json = await res.json();
-        return {
-          success: true,
-          order: json.order || json,
-          message: "Order placed successfully",
-        };
-      }
-    } catch (err) {
-      console.warn("[API] Failed to submit order to backend, falling back to local:", err);
-    }
+): Promise<{ success: boolean; order: Order; payment?: UpiPaymentInstructions; message?: string }> {
+  if (!API_BASE_URL) {
+    throw new Error("Checkout is unavailable right now. Please try again in a few minutes.");
   }
 
-  // Local simulated order creation for development/standalone mode
-  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-  const simulatedOrder: Order = {
-    ...payload,
-    id: `ord_${Date.now()}_${randomSuffix}`,
-    orderNumber: `DD-${Date.now().toString().slice(-5)}-${randomSuffix}`,
-    status: "confirmed",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+  const res = await fetch(`${API_BASE_URL.replace(/\/+$/, "")}/api/orders`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const json = await res.json().catch(() => null);
+  if (!res.ok || !json?.success || !json?.order) {
+    const message =
+      json?.error?.message ||
+      (typeof json?.error === "string" ? json.error : null) ||
+      "Failed to place order.";
+    throw new Error(message);
+  }
 
   return {
     success: true,
-    order: simulatedOrder,
-    message: "Order placed successfully (local mode)",
+    order: json.order,
+    payment: json.payment,
+    message: json.message || "Pay by UPI to confirm this order.",
   };
 }

@@ -8,7 +8,10 @@ export async function POST(request: Request) {
 
     // If client submits a full dropshipping order
     if (body.customer && body.items) {
-      const payload: CreateOrderPayload = body;
+      const payload: CreateOrderPayload = {
+        ...body,
+        paymentMethod: "upi",
+      };
       const result = await createOrder(payload);
       return NextResponse.json(result);
     }
@@ -24,9 +27,7 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Checkout API error:", error);
-    return NextResponse.json(
-      { error: "Failed to process checkout" },
-      { status: 500 },
-    );
+    const message = error instanceof Error ? error.message : "Failed to process checkout";
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 }

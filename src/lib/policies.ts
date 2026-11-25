@@ -172,7 +172,7 @@ const termsPolicy: PolicyData = {
 <ul>
   <li>All prices are listed in Indian Rupees (₹) unless stated otherwise.</li>
   <li>Prices are subject to change without prior notice. The price charged will be the price displayed at the time of your order.</li>
-  <li>We use secure third-party payment gateways to process your transactions. Dainty Dazzle does not store your credit/debit card information.</li>
+  <li>Orders are paid in full by UPI before dispatch. Cash on delivery is not offered. Dainty Dazzle does not store your card or UPI PIN.</li>
   <li>Payment must be completed in full before your order is processed and dispatched.</li>
 </ul>
 
@@ -247,7 +247,7 @@ const privacyPolicy: PolicyData = {
 <ul>
   <li><strong>Contact details:</strong> Name, email address, phone number</li>
   <li><strong>Shipping information:</strong> Delivery address, city, state/province, postal code, country</li>
-  <li><strong>Payment information:</strong> Payment details are collected and processed securely by our third-party payment gateway. We do not store your credit/debit card numbers.</li>
+  <li><strong>Payment information:</strong> Checkout shows the UPI ID and phone number to pay. We record that the order is awaiting or received payment. We do not collect your UPI PIN or card number.</li>
   <li><strong>Order details:</strong> Products purchased, order history, and transaction records</li>
   <li><strong>Communications:</strong> Any messages or enquiries you send to us via email, social media, or contact forms</li>
 </ul>
@@ -276,7 +276,7 @@ const privacyPolicy: PolicyData = {
 <ul>
   <li><strong>Fulfilment partners &amp; suppliers:</strong> Your name, shipping address, and order details are shared with our third-party suppliers so they can package and ship your products directly to you.</li>
   <li><strong>Shipping carriers:</strong> Your delivery address and contact information are shared with logistics providers for delivery purposes.</li>
-  <li><strong>Payment processors:</strong> Your payment information is securely processed by third-party payment gateways (e.g., Razorpay, UPI, Cash on Delivery, or similar secure payment gateways).</li>
+  <li><strong>Payments:</strong> You pay by UPI directly to the store phone number shown at checkout. We do not offer cash on delivery, and we do not store your UPI PIN.</li>
   <li><strong>Analytics providers:</strong> We may use analytics tools (such as Google Analytics) that collect anonymised data about website usage.</li>
   <li><strong>Legal authorities:</strong> If required by law, court order, or governmental request.</li>
 </ul>

@@ -7,15 +7,6 @@ import type {
   StorySectionData,
 } from "@/types/cms";
 import type { CreateOrderPayload, Order, UpiPaymentInstructions } from "@/types/order";
-import {
-  MOCK_PRODUCTS,
-  MOCK_COLLECTIONS,
-  DEFAULT_HERO_BANNER,
-  DEFAULT_FEATURED_SECTION,
-  DEFAULT_EDITORIAL_BANNER,
-  DEFAULT_STORY_SECTION,
-  DEFAULT_BOTTOM_BANNER,
-} from "./data/mock-data";
 
 export interface PaginatedProducts {
   products: Product[];
@@ -27,14 +18,15 @@ export interface PaginatedProducts {
   };
 }
 
-const API_BASE_URL = process.env.SERVER_URL || "";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_SERVER_URL ||
+  process.env.SERVER_URL ||
+  "https://api.daintydazzle.store";
 
 async function fetchFromApi<T>(
   path: string,
   options?: RequestInit,
 ): Promise<T | null> {
-  if (!API_BASE_URL) return null;
-
   try {
     const url = `${API_BASE_URL.replace(/\/+$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
     const res = await fetch(url, {
@@ -62,15 +54,15 @@ async function fetchFromApi<T>(
 
 export async function getProducts(): Promise<Product[]> {
   const remote = await fetchFromApi<{ products?: Product[] } | Product[]>(
-    "/api/products",
+    "/api/products?first=100",
   );
 
-  if (Array.isArray(remote) && remote.length > 0) return remote;
-  if (remote && "products" in remote && Array.isArray(remote.products) && remote.products.length > 0) {
+  if (Array.isArray(remote)) return remote;
+  if (remote && "products" in remote && Array.isArray(remote.products)) {
     return remote.products;
   }
 
-  return MOCK_PRODUCTS;
+  return [];
 }
 
 export async function getProductsPaginated({
@@ -91,21 +83,13 @@ export async function getProductsPaginated({
     return remote;
   }
 
-  // Local fallback pagination over mock products
-  const all = MOCK_PRODUCTS;
-  const startIndex = after ? all.findIndex((p) => p.id === after) + 1 : 0;
-  const safeStart = Math.max(0, startIndex);
-  const slice = all.slice(safeStart, safeStart + first);
-  const hasNextPage = safeStart + first < all.length;
-  const hasPreviousPage = safeStart > 0;
-
   return {
-    products: slice,
+    products: [],
     pageInfo: {
-      hasNextPage,
-      hasPreviousPage,
-      startCursor: slice.length > 0 ? slice[0].id : null,
-      endCursor: slice.length > 0 ? slice[slice.length - 1].id : null,
+      hasNextPage: false,
+      hasPreviousPage: false,
+      startCursor: null,
+      endCursor: null,
     },
   };
 }
@@ -122,11 +106,7 @@ export async function getProductByHandle(
     if ("id" in remote) return remote as Product;
   }
 
-  return (
-    MOCK_PRODUCTS.find(
-      (p) => p.handle.toLowerCase() === handle.toLowerCase(),
-    ) ?? null
-  );
+  return null;
 }
 
 export async function searchProducts(query: string): Promise<Product[]> {
@@ -140,13 +120,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
   if (Array.isArray(remote)) return remote;
   if (remote?.products && Array.isArray(remote.products)) return remote.products;
 
-  // Local search fallback
-  return MOCK_PRODUCTS.filter((p) => {
-    const inTitle = p.title.toLowerCase().includes(trimmed);
-    const inTags = p.tags?.some((t) => t.toLowerCase().includes(trimmed));
-    const inDesc = p.descriptionHtml.toLowerCase().includes(trimmed);
-    return inTitle || inTags || inDesc;
-  });
+  return [];
 }
 
 // ─── Collections ─────────────────────────────────────────────────────────────
@@ -156,17 +130,16 @@ export async function getCollections(): Promise<Collection[]> {
     "/api/collections",
   );
 
-  if (Array.isArray(remote) && remote.length > 0) return remote;
+  if (Array.isArray(remote)) return remote;
   if (
     remote &&
     "collections" in remote &&
-    Array.isArray(remote.collections) &&
-    remote.collections.length > 0
+    Array.isArray(remote.collections)
   ) {
     return remote.collections;
   }
 
-  return MOCK_COLLECTIONS;
+  return [];
 }
 
 export async function getCollectionByHandle(
@@ -181,50 +154,29 @@ export async function getCollectionByHandle(
     if ("id" in remote) return remote as Collection;
   }
 
-  const found = MOCK_COLLECTIONS.find(
-    (c) => c.handle.toLowerCase() === handle.toLowerCase(),
-  );
-
-  if (!found) return null;
-
-  // Ensure collection has its products populated
-  if (!found.products || found.products.length === 0) {
-    return {
-      ...found,
-      products: MOCK_PRODUCTS.filter((p) =>
-        p.tags?.some((t) => t.toLowerCase() === handle.toLowerCase()),
-      ),
-    };
-  }
-
-  return found;
+  return null;
 }
 
 // ─── CMS Content ─────────────────────────────────────────────────────────────
 
 export async function getHeroBanner(): Promise<HeroBannerData | null> {
-  const remote = await fetchFromApi<HeroBannerData>("/api/cms/hero");
-  return remote || DEFAULT_HERO_BANNER;
+  return await fetchFromApi<HeroBannerData>("/api/cms/hero");
 }
 
 export async function getFeaturedSection(): Promise<FeaturedSectionData | null> {
-  const remote = await fetchFromApi<FeaturedSectionData>("/api/cms/featured");
-  return remote || DEFAULT_FEATURED_SECTION;
+  return await fetchFromApi<FeaturedSectionData>("/api/cms/featured");
 }
 
 export async function getEditorialBanner(): Promise<EditorialBannerData | null> {
-  const remote = await fetchFromApi<EditorialBannerData>("/api/cms/editorial");
-  return remote || DEFAULT_EDITORIAL_BANNER;
+  return await fetchFromApi<EditorialBannerData>("/api/cms/editorial");
 }
 
 export async function getStorySection(): Promise<StorySectionData | null> {
-  const remote = await fetchFromApi<StorySectionData>("/api/cms/story");
-  return remote || DEFAULT_STORY_SECTION;
+  return await fetchFromApi<StorySectionData>("/api/cms/story");
 }
 
 export async function getBottomBanner(): Promise<EditorialBannerData | null> {
-  const remote = await fetchFromApi<EditorialBannerData>("/api/cms/bottom-banner");
-  return remote || DEFAULT_BOTTOM_BANNER;
+  return await fetchFromApi<EditorialBannerData>("/api/cms/bottom-banner");
 }
 
 // ─── Orders / Checkout ───────────────────────────────────────────────────────
@@ -232,10 +184,6 @@ export async function getBottomBanner(): Promise<EditorialBannerData | null> {
 export async function createOrder(
   payload: CreateOrderPayload,
 ): Promise<{ success: boolean; order: Order; payment?: UpiPaymentInstructions; message?: string }> {
-  if (!API_BASE_URL) {
-    throw new Error("Checkout is unavailable right now. Please try again in a few minutes.");
-  }
-
   const res = await fetch(`${API_BASE_URL.replace(/\/+$/, "")}/api/orders`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

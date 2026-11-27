@@ -6,7 +6,7 @@ export function Skeleton({
 }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`skeleton-shimmer rounded-md ${className}`}
+      className={`skeleton-shimmer rounded-xs ${className}`}
       {...props}
     />
   );
@@ -14,14 +14,19 @@ export function Skeleton({
 
 export function ProductCardSkeleton() {
   return (
-    <div className="bg-card-white border border-sage-border/80 rounded-lg p-3 sm:p-4 space-y-3 shadow-2xs">
-      <Skeleton className="w-full aspect-square rounded-md" />
-      <div className="space-y-2 pt-1">
-        <Skeleton className="h-4 w-3/4 rounded" />
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-3.5 w-1/3 rounded" />
-          <Skeleton className="h-3 w-1/4 rounded opacity-60" />
+    <div className="flex flex-col bg-card-white border border-sage-border/50 rounded-xs overflow-hidden">
+      {/* Product Image Placeholder */}
+      <div className="relative aspect-square w-full bg-[#f6f8f5]">
+        <Skeleton className="w-full h-full rounded-none" />
+      </div>
+
+      {/* Product Information Bar */}
+      <div className="p-3 sm:p-4 flex items-center justify-between gap-2 border-t border-sage-border/40 bg-card-white">
+        <div className="flex flex-col gap-1.5 min-w-0 flex-1">
+          <Skeleton className="h-3 w-3/4" />
+          <Skeleton className="h-3 w-1/3 opacity-70" />
         </div>
+        <Skeleton className="h-3 w-3 shrink-0 opacity-50" />
       </div>
     </div>
   );

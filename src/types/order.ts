@@ -54,6 +54,7 @@ export interface CreateOrderPayload {
   shippingFee: number;
   total: number;
   paymentMethod: PaymentMethod;
+  transactionId?: string;
   notes?: string;
 }
 

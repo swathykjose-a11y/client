@@ -3,15 +3,19 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { QRCodeSVG } from "qrcode.react";
 import { useCart } from "@/components/providers/cart-provider";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { Button } from "@/components/ui/button";
-import { STORE_UPI } from "@/lib/store-payment";
-import type { Order, ShippingAddress, UpiPaymentInstructions } from "@/types/order";
+import { STORE_UPI, buildUpiUri } from "@/lib/store-payment";
+import type { Order, ShippingAddress } from "@/types/order";
+
+type CheckoutStep = "address" | "payment" | "confirmed";
 
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart();
 
+  const [step, setStep] = useState<CheckoutStep>("address");
   const [formData, setFormData] = useState<ShippingAddress>({
     firstName: "",
     lastName: "",
@@ -25,13 +29,16 @@ export default function CheckoutPage() {
     country: "India",
   });
 
+  const [transactionId, setTransactionId] = useState("");
+  const [copiedField, setCopiedField] = useState<"vpa" | "phone" | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [placedOrder, setPlacedOrder] = useState<Order | null>(null);
-  const [upiPayment, setUpiPayment] = useState<UpiPaymentInstructions | null>(null);
+  const [confirmedTxnId, setConfirmedTxnId] = useState("");
 
   const shippingFee = subtotal >= 999 || items.length === 0 ? 0 : 99;
   const grandTotal = subtotal + shippingFee;
+  const upiQrValue = buildUpiUri(grandTotal, "Dainty Dazzle Order");
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -40,11 +47,17 @@ export default function CheckoutPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmitOrder = async (e: React.FormEvent) => {
+  const handleCopy = (value: string, field: "vpa" | "phone") => {
+    navigator.clipboard.writeText(value);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  // Step 1 -> Step 2: Validate address locally & show QR code (no order created yet)
+  const handleProceedToPayment = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
-    // Validation
     if (
       !formData.firstName.trim() ||
       !formData.email.trim() ||
@@ -55,6 +68,26 @@ export default function CheckoutPage() {
       !formData.postalCode.trim()
     ) {
       setErrorMessage("Please complete all required fields.");
+      return;
+    }
+
+    if (items.length === 0) {
+      setErrorMessage("Your cart is empty.");
+      return;
+    }
+
+    setStep("payment");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Step 2 -> Step 3: Submit transaction ID (UTR), create order & notify admin
+  const handleConfirmPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+
+    const cleanedTxnId = transactionId.trim();
+    if (cleanedTxnId.length < 6) {
+      setErrorMessage("Please enter a valid UPI Transaction ID / UTR (at least 6 characters).");
       return;
     }
 
@@ -82,6 +115,7 @@ export default function CheckoutPage() {
         shippingFee,
         total: grandTotal,
         paymentMethod: "upi",
+        transactionId: cleanedTxnId,
       };
 
       const res = await fetch("/api/checkout", {
@@ -96,8 +130,9 @@ export default function CheckoutPage() {
         throw new Error(data.error || "Failed to place order.");
       }
 
+      setConfirmedTxnId(cleanedTxnId);
       setPlacedOrder(data.order);
-      setUpiPayment(data.payment ?? null);
+      setStep("confirmed");
       clearCart();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
@@ -107,8 +142,8 @@ export default function CheckoutPage() {
     }
   };
 
-  // ─── Order Placed Confirmation Screen ──────────────────────────────────────
-  if (placedOrder) {
+  // ─── Step 3: Order Confirmed Screen ────────────────────────────────────────
+  if (step === "confirmed" && placedOrder) {
     return (
       <section className="py-16 md:py-24 bg-sage-canvas min-h-[80vh]">
         <div className="w-full max-w-2xl mx-auto px-4 sm:px-6">
@@ -120,11 +155,11 @@ export default function CheckoutPage() {
             </div>
 
             <span className="text-[10px] font-primary font-medium uppercase tracking-[0.25em] text-sage-muted mb-2 block">
-              Pay by UPI
+              Order Received
             </span>
 
             <h1 className="font-secondary text-3xl sm:text-4xl text-charcoal mb-3">
-              Complete your payment
+              Thank you for your order
             </h1>
 
             <p className="text-xs sm:text-sm font-primary text-sage-muted leading-relaxed mb-6">
@@ -132,7 +167,7 @@ export default function CheckoutPage() {
               <strong className="text-charcoal font-medium">
                 #{placedOrder.orderNumber}
               </strong>{" "}
-              is reserved. We dispatch it only after this UPI payment arrives. Cash on delivery is not available.
+              has been placed. We are verifying your UPI payment and will dispatch your jewelry shortly.
             </p>
 
             <div className="bg-sage-canvas/70 border border-sage-border/40 p-4 sm:p-6 text-left mb-8 rounded-xs text-xs font-primary space-y-2">
@@ -154,31 +189,13 @@ export default function CheckoutPage() {
                 </span>
               </div>
               <div className="flex justify-between border-b border-sage-border/30 pb-2">
-                <span className="text-sage-muted">Pay to:</span>
-                <span className="text-charcoal text-right font-medium">
-                  {upiPayment?.payeeName || STORE_UPI.payeeName}
-                </span>
-              </div>
-              <div className="flex justify-between border-b border-sage-border/30 pb-2">
-                <span className="text-sage-muted">UPI ID:</span>
-                <span className="text-charcoal text-right font-medium">
-                  {upiPayment?.vpa || STORE_UPI.vpa}
-                </span>
-              </div>
-              <div className="flex justify-between border-b border-sage-border/30 pb-2">
-                <span className="text-sage-muted">Phone:</span>
-                <span className="text-charcoal text-right font-medium">
-                  {upiPayment?.phone || STORE_UPI.phone}
-                </span>
-              </div>
-              <div className="flex justify-between border-b border-sage-border/30 pb-2">
-                <span className="text-sage-muted">Payment note:</span>
-                <span className="text-charcoal text-right font-medium">
-                  {upiPayment?.note || `Dainty Dazzle ${placedOrder.orderNumber}`}
+                <span className="text-sage-muted">UPI Transaction ID / UTR:</span>
+                <span className="text-charcoal text-right font-mono font-medium">
+                  {confirmedTxnId}
                 </span>
               </div>
               <div className="flex justify-between pt-1">
-                <span className="text-sage-muted">Total Amount:</span>
+                <span className="text-sage-muted">Total Paid:</span>
                 <PriceDisplay
                   amount={placedOrder.total.toFixed(0)}
                   currencyCode="INR"
@@ -187,18 +204,8 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {upiPayment?.upiUri ? (
-              <a
-                href={upiPayment.upiUri}
-                className="inline-flex mb-6 text-xs font-primary uppercase tracking-wider text-charcoal underline underline-offset-4"
-              >
-                Open UPI app to pay
-              </a>
-            ) : null}
-
             <p className="text-[11px] font-primary text-sage-muted mb-8">
-              Use the phone number or UPI ID above. Put the order number in the payment note.
-              Estimated delivery after payment is confirmed: 5–7 business days.
+              Estimated delivery after payment verification: 5–7 business days.
             </p>
 
             <Link href="/products">
@@ -233,14 +240,144 @@ export default function CheckoutPage() {
     );
   }
 
-  // ─── Checkout Form & Order Summary ─────────────────────────────────────────
+  // ─── Step 2: UPI QR Code & Transaction ID Submission ───────────────────────
+  if (step === "payment") {
+    return (
+      <section className="py-12 md:py-20 bg-sage-canvas min-h-[85vh]">
+        <div className="w-full max-w-2xl mx-auto px-4 sm:px-6">
+          <div className="mb-8 border-b border-sage-border/60 pb-5 flex items-center justify-between">
+            <div>
+              <span className="text-[10px] font-primary font-medium uppercase tracking-[0.25em] text-sage-muted mb-1 block">
+                Step 2 of 2 • UPI Payment
+              </span>
+              <h1 className="font-secondary text-3xl text-charcoal tracking-tight font-normal">
+                Scan &amp; Pay
+              </h1>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setErrorMessage(null);
+                setStep("address");
+              }}
+              className="text-[11px] font-primary font-medium tracking-wider text-charcoal/80 hover:text-charcoal uppercase cursor-pointer"
+            >
+              ← Edit Address
+            </button>
+          </div>
+
+          {errorMessage && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 text-xs font-primary rounded-xs">
+              {errorMessage}
+            </div>
+          )}
+
+          <form
+            onSubmit={handleConfirmPayment}
+            className="bg-card-white border border-sage-border/60 p-6 sm:p-10 rounded-xs space-y-6"
+          >
+            {/* Dynamic QR Code for exact cart value */}
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="bg-white p-3 border border-sage-border/60 rounded-xs">
+                <QRCodeSVG
+                  value={upiQrValue}
+                  size={200}
+                  level="M"
+                  includeMargin={false}
+                />
+              </div>
+              <div>
+                <p className="text-[11px] font-primary uppercase tracking-[0.16em] text-sage-muted">
+                  Amount to Pay
+                </p>
+                <PriceDisplay
+                  amount={grandTotal.toFixed(0)}
+                  currencyCode="INR"
+                  className="text-2xl font-secondary text-charcoal mt-0.5 block"
+                />
+              </div>
+              <p className="text-xs font-primary text-sage-muted max-w-sm">
+                Scan this QR code with Google Pay, PhonePe, Paytm, or any UPI app. The exact amount is pre-filled.
+              </p>
+            </div>
+
+            {/* Store UPI ID & Phone Number */}
+            <div className="bg-sage-canvas/60 border border-sage-border/40 p-4 sm:p-5 rounded-xs space-y-3 text-xs font-primary">
+              <div className="flex items-center justify-between gap-2 border-b border-sage-border/30 pb-2.5">
+                <span className="text-sage-muted">Payee Name</span>
+                <span className="text-charcoal font-medium">{STORE_UPI.payeeName}</span>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 border-b border-sage-border/30 pb-2.5">
+                <span className="text-sage-muted">UPI ID</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-charcoal font-mono font-medium">{STORE_UPI.vpa}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(STORE_UPI.vpa, "vpa")}
+                    className="text-[10px] uppercase tracking-wider px-2 py-0.5 border border-sage-border hover:border-charcoal text-charcoal rounded-xs cursor-pointer"
+                  >
+                    {copiedField === "vpa" ? "Copied" : "Copy"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sage-muted">Phone Number</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-charcoal font-mono font-medium">+91 {STORE_UPI.phone}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(STORE_UPI.phone, "phone")}
+                    className="text-[10px] uppercase tracking-wider px-2 py-0.5 border border-sage-border hover:border-charcoal text-charcoal rounded-xs cursor-pointer"
+                  >
+                    {copiedField === "phone" ? "Copied" : "Copy"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Transaction ID / UTR Input */}
+            <div className="space-y-2 pt-2 border-t border-sage-border/40">
+              <label className="block text-[11px] font-primary uppercase tracking-wider text-charcoal">
+                UPI Transaction ID / UTR Number *
+              </label>
+              <input
+                type="text"
+                required
+                value={transactionId}
+                onChange={(e) => setTransactionId(e.target.value)}
+                placeholder="e.g. 412345678901 (12-digit UTR from your UPI app)"
+                className="w-full px-3.5 py-3 text-xs font-mono bg-sage-canvas/40 border border-sage-border focus:border-charcoal focus:outline-none rounded-xs"
+              />
+              <p className="text-[11px] font-primary text-sage-muted">
+                After completing payment, enter the Transaction ID / UTR shown in your UPI app to confirm your order.
+              </p>
+            </div>
+
+            <Button
+              variant="primary"
+              size="lg"
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full"
+            >
+              {isSubmitting ? "CONFIRMING ORDER..." : "CONFIRM PAYMENT & PLACE ORDER ↗"}
+            </Button>
+          </form>
+        </div>
+      </section>
+    );
+  }
+
+  // ─── Step 1: Checkout Address Form & Order Summary ─────────────────────────
   return (
     <section className="py-12 md:py-20 bg-sage-canvas min-h-[85vh]">
       <div className="w-full max-w-6xl mx-auto px-4 sm:px-8">
         <div className="mb-8 md:mb-12 border-b border-sage-border/60 pb-6 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-primary font-medium uppercase tracking-[0.25em] text-sage-muted mb-1 block">
-              Direct Checkout
+              Step 1 of 2 • Direct Checkout
             </span>
             <h1 className="font-secondary text-3xl md:text-4xl text-charcoal tracking-tight font-normal">
               Complete Your Order
@@ -260,7 +397,7 @@ export default function CheckoutPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmitOrder}>
+        <form onSubmit={handleProceedToPayment}>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             {/* ─── Left: Shipping & Contact Form ───────────────────────────── */}
             <div className="lg:col-span-7 space-y-8">
@@ -411,25 +548,6 @@ export default function CheckoutPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Payment Method */}
-              <div className="bg-card-white border border-sage-border/60 p-6 sm:p-8 rounded-xs space-y-4">
-                <h2 className="font-secondary text-xl text-charcoal">
-                  3. Payment Method
-                </h2>
-
-                <div className="border border-charcoal bg-sage-canvas/30 p-4 rounded-xs space-y-2">
-                  <div className="text-xs font-primary font-medium text-charcoal">
-                    UPI to {STORE_UPI.payeeName}
-                  </div>
-                  <p className="text-[11px] font-primary text-sage-muted leading-relaxed">
-                    Pay from any UPI app to phone{" "}
-                    <span className="text-charcoal font-medium">{STORE_UPI.phone}</span> or UPI ID{" "}
-                    <span className="text-charcoal font-medium">{STORE_UPI.vpa}</span>.
-                    Cash on delivery is not available. We ship after the payment shows on this number.
-                  </p>
-                </div>
-              </div>
             </div>
 
             {/* ─── Right: Order Summary Sidebar ────────────────────────────── */}
@@ -500,19 +618,18 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Submit CTA */}
+              {/* Continue CTA */}
               <Button
                 variant="primary"
                 size="lg"
                 type="submit"
-                disabled={isSubmitting}
                 className="w-full"
               >
-                {isSubmitting ? "PROCESSING..." : "PLACE ORDER & PAY BY UPI ↗"}
+                CONTINUE TO PAYMENT ↗
               </Button>
 
               <p className="text-[10px] font-primary text-center text-sage-muted tracking-wider uppercase">
-                Encrypted Checkout • Quality Guaranteed
+                Pay by UPI • Cash on Delivery Unavailable
               </p>
             </div>
           </div>

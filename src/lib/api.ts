@@ -34,7 +34,7 @@ async function fetchFromApi<T>(
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      next: { revalidate: 60 },
+      cache: "no-store",
       ...options,
     });
 

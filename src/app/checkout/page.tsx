@@ -33,6 +33,7 @@ export default function CheckoutPage() {
   const [step, setStep] = useState<CheckoutStep>("address");
   const [formData, setFormData] = useState<ShippingAddress>(EMPTY_SHIPPING);
   const [hasSavedDetails, setHasSavedDetails] = useState(false);
+  const [transactionId, setTransactionId] = useState("");
 
   // Load saved customer details & checkout step draft from localStorage on mount
   useEffect(() => {
@@ -78,7 +79,6 @@ export default function CheckoutPage() {
     }
   }, [step, transactionId]);
 
-  const [transactionId, setTransactionId] = useState("");
   const [copiedField, setCopiedField] = useState<"vpa" | "phone" | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);

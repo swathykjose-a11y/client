@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCollectionByHandle, getCollections } from "@/lib/api";
+import { getCollectionByHandle, getCollections, getProducts } from "@/lib/api";
+import type { Product } from "@/types/product";
 import {
   CollectionJsonLd,
   BreadcrumbJsonLd,
@@ -66,9 +67,40 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CollectionPage({ params }: Props) {
   const { handle } = await params;
-  const collection = await getCollectionByHandle(handle);
+  let collection = await getCollectionByHandle(handle);
 
-  if (!collection) notFound();
+  if (!collection) {
+    // Graceful fallback: synthesize collection container and query products
+    const cleanHandle = handle.toLowerCase();
+    const title = cleanHandle.charAt(0).toUpperCase() + cleanHandle.slice(1);
+    const allProducts = await getProducts();
+    const singular = cleanHandle.replace(/s$/, "");
+    const filtered = allProducts.filter(
+      (p: Product) =>
+        p.tags?.some((t: string) => t.toLowerCase() === cleanHandle || t.toLowerCase() === singular) ||
+        p.title.toLowerCase().includes(singular),
+    );
+    collection = {
+      id: `col_${cleanHandle}`,
+      handle: cleanHandle,
+      title,
+      description: `Explore our handcrafted ${title.toLowerCase()} collection designed for everyday elegance.`,
+      products: filtered,
+    };
+  } else if (!collection.products || collection.products.length === 0) {
+    // Fallback filter from all catalog products if collectionProducts link is pending
+    const cleanHandle = handle.toLowerCase();
+    const singular = cleanHandle.replace(/s$/, "");
+    const allProducts = await getProducts();
+    const filtered = allProducts.filter(
+      (p: Product) =>
+        p.tags?.some((t: string) => t.toLowerCase() === cleanHandle || t.toLowerCase() === singular) ||
+        p.title.toLowerCase().includes(singular),
+    );
+    if (filtered.length > 0) {
+      collection = { ...collection, products: filtered };
+    }
+  }
 
   return (
     <>

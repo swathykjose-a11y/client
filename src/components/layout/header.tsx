@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/components/providers/cart-provider";
 import { ToastContainer } from "@/components/ui/toast";
-import { SearchOverlay } from "@/components/shared/search-overlay";
 
 const navLinks = [
   { href: "/collections/earrings", label: "EARRINGS" },
@@ -15,7 +14,6 @@ const navLinks = [
 export function Header() {
   const { totalQuantity } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
 
   return (
     <>
@@ -76,29 +74,8 @@ export function Header() {
               Dainty Dazzle
             </Link>
 
-            {/* Right: Search + Cart */}
+            {/* Right: Cart */}
             <div className="flex items-center gap-3 lg:gap-4 flex-1 justify-end">
-              {/* Search Button */}
-              <button
-                type="button"
-                onClick={() => setSearchOpen(true)}
-                className="p-2 text-charcoal/70 hover:text-charcoal transition-colors cursor-pointer"
-                aria-label="Search products"
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  aria-hidden="true"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.3-4.3" />
-                </svg>
-              </button>
-
               {/* Cart Pill Button */}
               <Link
                 href="/cart"
@@ -132,12 +109,6 @@ export function Header() {
           </nav>
         )}
       </header>
-
-      {/* Search Overlay */}
-      <SearchOverlay
-        isOpen={searchOpen}
-        onClose={() => setSearchOpen(false)}
-      />
 
       <ToastContainer />
     </>

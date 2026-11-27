@@ -13,6 +13,7 @@ import type { Order, ShippingAddress } from "@/types/order";
 type CheckoutStep = "address" | "payment" | "confirmed";
 
 const SAVED_CUSTOMER_KEY = "dd_checkout_customer_v1";
+const SAVED_CHECKOUT_DRAFT_KEY = "dd_checkout_draft_v1";
 const EMPTY_SHIPPING: ShippingAddress = {
   firstName: "",
   lastName: "",
@@ -33,7 +34,7 @@ export default function CheckoutPage() {
   const [formData, setFormData] = useState<ShippingAddress>(EMPTY_SHIPPING);
   const [hasSavedDetails, setHasSavedDetails] = useState(false);
 
-  // Load saved customer details from localStorage on mount (no login required)
+  // Load saved customer details & checkout step draft from localStorage on mount
   useEffect(() => {
     try {
       const raw = localStorage.getItem(SAVED_CUSTOMER_KEY);
@@ -46,10 +47,36 @@ export default function CheckoutPage() {
           );
         }
       }
+      const draftRaw = localStorage.getItem(SAVED_CHECKOUT_DRAFT_KEY);
+      if (draftRaw) {
+        const draft = JSON.parse(draftRaw) as {
+          step?: CheckoutStep;
+          transactionId?: string;
+        };
+        if (draft.step === "payment") {
+          setStep("payment");
+        }
+        if (draft.transactionId) {
+          setTransactionId(draft.transactionId);
+        }
+      }
     } catch {
       // ignore invalid storage
     }
   }, []);
+
+  // Persist current checkout step & transactionId across page refreshes
+  useEffect(() => {
+    if (step === "confirmed") return;
+    try {
+      localStorage.setItem(
+        SAVED_CHECKOUT_DRAFT_KEY,
+        JSON.stringify({ step, transactionId }),
+      );
+    } catch {
+      // ignore
+    }
+  }, [step, transactionId]);
 
   const [transactionId, setTransactionId] = useState("");
   const [copiedField, setCopiedField] = useState<"vpa" | "phone" | null>(null);
@@ -174,6 +201,11 @@ export default function CheckoutPage() {
       setConfirmedTxnId(cleanedTxnId);
       setPlacedOrder(data.order);
       setStep("confirmed");
+      try {
+        localStorage.removeItem(SAVED_CHECKOUT_DRAFT_KEY);
+      } catch {
+        // ignore
+      }
       clearCart();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong.";

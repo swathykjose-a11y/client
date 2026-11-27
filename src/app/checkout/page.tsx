@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { QRCodeSVG } from "qrcode.react";
@@ -12,22 +12,44 @@ import type { Order, ShippingAddress } from "@/types/order";
 
 type CheckoutStep = "address" | "payment" | "confirmed";
 
+const SAVED_CUSTOMER_KEY = "dd_checkout_customer_v1";
+const EMPTY_SHIPPING: ShippingAddress = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  addressLine1: "",
+  addressLine2: "",
+  city: "",
+  state: "",
+  postalCode: "",
+  country: "India",
+};
+
 export default function CheckoutPage() {
   const { items, subtotal, clearCart } = useCart();
 
   const [step, setStep] = useState<CheckoutStep>("address");
-  const [formData, setFormData] = useState<ShippingAddress>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    addressLine1: "",
-    addressLine2: "",
-    city: "",
-    state: "",
-    postalCode: "",
-    country: "India",
-  });
+  const [formData, setFormData] = useState<ShippingAddress>(EMPTY_SHIPPING);
+  const [hasSavedDetails, setHasSavedDetails] = useState(false);
+
+  // Load saved customer details from localStorage on mount (no login required)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SAVED_CUSTOMER_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<ShippingAddress>;
+        if (parsed && typeof parsed === "object") {
+          setFormData((prev) => ({ ...prev, ...parsed }));
+          setHasSavedDetails(
+            Boolean(parsed.email || parsed.phone || parsed.addressLine1),
+          );
+        }
+      }
+    } catch {
+      // ignore invalid storage
+    }
+  }, []);
 
   const [transactionId, setTransactionId] = useState("");
   const [copiedField, setCopiedField] = useState<"vpa" | "phone" | null>(null);
@@ -44,7 +66,26 @@ export default function CheckoutPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value };
+      try {
+        localStorage.setItem(SAVED_CUSTOMER_KEY, JSON.stringify(next));
+        setHasSavedDetails(true);
+      } catch {
+        // ignore storage quota errors
+      }
+      return next;
+    });
+  };
+
+  const handleClearSavedDetails = () => {
+    setFormData(EMPTY_SHIPPING);
+    setHasSavedDetails(false);
+    try {
+      localStorage.removeItem(SAVED_CUSTOMER_KEY);
+    } catch {
+      // ignore
+    }
   };
 
   const handleCopy = (value: string, field: "vpa" | "phone") => {
@@ -403,9 +444,20 @@ export default function CheckoutPage() {
             <div className="lg:col-span-7 space-y-8">
               {/* Contact Information */}
               <div className="bg-card-white border border-sage-border/60 p-6 sm:p-8 rounded-xs space-y-4">
-                <h2 className="font-secondary text-xl text-charcoal">
-                  1. Contact Information
-                </h2>
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="font-secondary text-xl text-charcoal">
+                    1. Contact Information
+                  </h2>
+                  {hasSavedDetails && (
+                    <button
+                      type="button"
+                      onClick={handleClearSavedDetails}
+                      className="text-[10px] font-primary uppercase tracking-wider text-sage-muted hover:text-charcoal underline underline-offset-4 cursor-pointer"
+                    >
+                      Clear saved details
+                    </button>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[11px] font-primary uppercase tracking-wider text-charcoal mb-1">
@@ -414,6 +466,7 @@ export default function CheckoutPage() {
                     <input
                       type="email"
                       name="email"
+                      autoComplete="email"
                       required
                       value={formData.email}
                       onChange={handleInputChange}
@@ -428,6 +481,7 @@ export default function CheckoutPage() {
                     <input
                       type="tel"
                       name="phone"
+                      autoComplete="tel"
                       required
                       value={formData.phone}
                       onChange={handleInputChange}
@@ -452,6 +506,7 @@ export default function CheckoutPage() {
                     <input
                       type="text"
                       name="firstName"
+                      autoComplete="given-name"
                       required
                       value={formData.firstName}
                       onChange={handleInputChange}
@@ -466,6 +521,7 @@ export default function CheckoutPage() {
                     <input
                       type="text"
                       name="lastName"
+                      autoComplete="family-name"
                       value={formData.lastName}
                       onChange={handleInputChange}
                       placeholder="Last name"
@@ -481,6 +537,7 @@ export default function CheckoutPage() {
                   <input
                     type="text"
                     name="addressLine1"
+                    autoComplete="address-line1"
                     required
                     value={formData.addressLine1}
                     onChange={handleInputChange}
@@ -496,6 +553,7 @@ export default function CheckoutPage() {
                   <input
                     type="text"
                     name="addressLine2"
+                    autoComplete="address-line2"
                     value={formData.addressLine2}
                     onChange={handleInputChange}
                     placeholder="Near city center, Floor 2"
@@ -511,6 +569,7 @@ export default function CheckoutPage() {
                     <input
                       type="text"
                       name="city"
+                      autoComplete="address-level2"
                       required
                       value={formData.city}
                       onChange={handleInputChange}
@@ -525,6 +584,7 @@ export default function CheckoutPage() {
                     <input
                       type="text"
                       name="state"
+                      autoComplete="address-level1"
                       required
                       value={formData.state}
                       onChange={handleInputChange}
@@ -539,6 +599,7 @@ export default function CheckoutPage() {
                     <input
                       type="text"
                       name="postalCode"
+                      autoComplete="postal-code"
                       required
                       value={formData.postalCode}
                       onChange={handleInputChange}

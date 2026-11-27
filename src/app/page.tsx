@@ -37,7 +37,7 @@ export default async function Home() {
       <EditorialBanner
         imageUrl={
           editorialData?.imageUrl ||
-          "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=1920&q=85&auto=format&fit=crop"
+          "https://res.cloudinary.com/io2tbyjp/image/upload/v1795766216/dainty-dazzle/dainty-dazzle/02-editorial-banner-elegance.jpg"
         }
         imageAlt="Elegant gold jewelry editorial"
         headline={editorialData?.headline || "Elegance in every detail."}
@@ -53,7 +53,7 @@ export default async function Home() {
       <EditorialBanner
         imageUrl={
           bottomData?.imageUrl ||
-          "https://images.unsplash.com/photo-1630019852942-f89202989a59?w=1920&q=85&auto=format&fit=crop"
+          "https://res.cloudinary.com/io2tbyjp/image/upload/v1795766221/dainty-dazzle/dainty-dazzle/04-editorial-banner-technique.jpg"
         }
         imageAlt="Gold earrings close-up editorial"
         headline={bottomData?.headline || "Emotion embraces technique."}

@@ -17,7 +17,7 @@ interface HeroSectionProps {
 export function HeroSection({ heroData }: HeroSectionProps) {
   const imageUrl =
     heroData?.imageUrl ||
-    "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1920&q=85&auto=format&fit=crop";
+    "https://res.cloudinary.com/io2tbyjp/image/upload/v1795766214/dainty-dazzle/dainty-dazzle/01-hero-banner.jpg";
   const headline = heroData?.headline || "Dainty Dazzle";
   const subtitle =
     heroData?.subtitle ||

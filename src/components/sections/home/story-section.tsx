@@ -17,7 +17,7 @@ interface StorySectionProps {
 export function StorySection({ storyData }: StorySectionProps) {
   const imageUrl =
     storyData?.imageUrl ||
-    "https://images.unsplash.com/photo-1617038220319-276d3cfab638?w=1200&q=85&auto=format&fit=crop";
+    "https://res.cloudinary.com/io2tbyjp/image/upload/v1795766219/dainty-dazzle/dainty-dazzle/03-story-section-craftsmanship.jpg";
   const eyebrow = storyData?.eyebrow || "Our Story";
   const headline = storyData?.headline || "We believe\nin our process.";
   const paragraph1 =

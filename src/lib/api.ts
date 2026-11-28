@@ -184,10 +184,16 @@ export async function getBottomBanner(): Promise<EditorialBannerData | null> {
 export async function createOrder(
   payload: CreateOrderPayload,
 ): Promise<{ success: boolean; order: Order; payment?: UpiPaymentInstructions; message?: string }> {
+  const { idempotencyKey, ...bodyPayload } = payload;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (idempotencyKey) {
+    headers["Idempotency-Key"] = idempotencyKey;
+  }
+
   const res = await fetch(`${API_BASE_URL.replace(/\/+$/, "")}/api/orders`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    headers,
+    body: JSON.stringify(bodyPayload),
   });
 
   const json = await res.json().catch(() => null);

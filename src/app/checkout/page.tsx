@@ -34,6 +34,7 @@ export default function CheckoutPage() {
   const [formData, setFormData] = useState<ShippingAddress>(EMPTY_SHIPPING);
   const [hasSavedDetails, setHasSavedDetails] = useState(false);
   const [transactionId, setTransactionId] = useState("");
+  const [idempotencyKey, setIdempotencyKey] = useState("");
 
   // Load saved customer details & checkout step draft from localStorage on mount
   useEffect(() => {
@@ -53,6 +54,7 @@ export default function CheckoutPage() {
         const draft = JSON.parse(draftRaw) as {
           step?: CheckoutStep;
           transactionId?: string;
+          idempotencyKey?: string;
         };
         if (draft.step === "payment") {
           setStep("payment");
@@ -60,24 +62,27 @@ export default function CheckoutPage() {
         if (draft.transactionId) {
           setTransactionId(draft.transactionId);
         }
+        setIdempotencyKey(draft.idempotencyKey || crypto.randomUUID());
+      } else {
+        setIdempotencyKey(crypto.randomUUID());
       }
     } catch {
-      // ignore invalid storage
+      setIdempotencyKey(crypto.randomUUID());
     }
   }, []);
 
-  // Persist current checkout step & transactionId across page refreshes
+  // Persist current checkout step, transactionId & idempotencyKey across page refreshes
   useEffect(() => {
     if (step === "confirmed") return;
     try {
       localStorage.setItem(
         SAVED_CHECKOUT_DRAFT_KEY,
-        JSON.stringify({ step, transactionId }),
+        JSON.stringify({ step, transactionId, idempotencyKey }),
       );
     } catch {
       // ignore
     }
-  }, [step, transactionId]);
+  }, [step, transactionId, idempotencyKey]);
 
   const [copiedField, setCopiedField] = useState<"vpa" | "phone" | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -184,6 +189,7 @@ export default function CheckoutPage() {
         total: grandTotal,
         paymentMethod: "upi",
         transactionId: cleanedTxnId,
+        idempotencyKey: idempotencyKey || crypto.randomUUID(),
       };
 
       const res = await fetch("/api/checkout", {

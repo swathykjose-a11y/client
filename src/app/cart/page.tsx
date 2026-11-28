@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/providers/cart-provider";
+import { getShippingSettings } from "@/lib/api";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { Button } from "@/components/ui/button";
 
@@ -13,6 +14,13 @@ export default function CartPage() {
   const { items, totalQuantity, subtotal, updateQuantity, removeItem } =
     useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState(299);
+
+  useEffect(() => {
+    getShippingSettings().then((s) => {
+      setFreeShippingThreshold(s.freeDeliveryAbove);
+    });
+  }, []);
 
   const handleCheckout = () => {
     if (items.length === 0) return;
@@ -20,12 +28,13 @@ export default function CartPage() {
     router.push("/checkout");
   };
 
-  const freeShippingThreshold = 999;
-  const amountToFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
-  const freeShippingProgress = Math.min(
-    100,
-    (subtotal / freeShippingThreshold) * 100,
-  );
+  const isFreeUnlocked = subtotal > freeShippingThreshold;
+  const amountToFreeShipping = isFreeUnlocked
+    ? 0
+    : Math.max(1, freeShippingThreshold + 1 - subtotal);
+  const freeShippingProgress = freeShippingThreshold > 0
+    ? Math.min(100, (subtotal / (freeShippingThreshold + 1)) * 100)
+    : 100;
 
   return (
     <section className="py-12 md:py-20 bg-sage-canvas min-h-[75vh]">

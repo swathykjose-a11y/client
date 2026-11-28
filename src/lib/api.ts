@@ -179,6 +179,21 @@ export async function getBottomBanner(): Promise<EditorialBannerData | null> {
   return await fetchFromApi<EditorialBannerData>("/api/cms/bottom-banner");
 }
 
+export interface StoreShippingSettings {
+  freeDeliveryAbove: number;
+  deliveryFee: number;
+}
+
+export async function getShippingSettings(): Promise<StoreShippingSettings> {
+  const data = await fetchFromApi<Partial<StoreShippingSettings>>("/api/cms/shipping");
+  return {
+    freeDeliveryAbove:
+      typeof data?.freeDeliveryAbove === "number" ? data.freeDeliveryAbove : 299,
+    deliveryFee:
+      typeof data?.deliveryFee === "number" ? data.deliveryFee : 99,
+  };
+}
+
 // ─── Orders / Checkout ───────────────────────────────────────────────────────
 
 export async function createOrder(

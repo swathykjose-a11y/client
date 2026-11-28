@@ -8,6 +8,7 @@ import { useCart } from "@/components/providers/cart-provider";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { Button } from "@/components/ui/button";
 import { STORE_UPI, buildUpiUri } from "@/lib/store-payment";
+import { getShippingSettings } from "@/lib/api";
 import type { Order, ShippingAddress } from "@/types/order";
 
 type CheckoutStep = "address" | "payment" | "confirmed";
@@ -89,8 +90,17 @@ export default function CheckoutPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [placedOrder, setPlacedOrder] = useState<Order | null>(null);
   const [confirmedTxnId, setConfirmedTxnId] = useState("");
+  const [freeDeliveryAbove, setFreeDeliveryAbove] = useState(299);
+  const [baseDeliveryFee, setBaseDeliveryFee] = useState(99);
 
-  const shippingFee = subtotal >= 999 || items.length === 0 ? 0 : 99;
+  useEffect(() => {
+    getShippingSettings().then((s) => {
+      setFreeDeliveryAbove(s.freeDeliveryAbove);
+      setBaseDeliveryFee(s.deliveryFee);
+    });
+  }, []);
+
+  const shippingFee = subtotal > freeDeliveryAbove || items.length === 0 ? 0 : baseDeliveryFee;
   const grandTotal = subtotal + shippingFee;
   const upiQrValue = buildUpiUri(grandTotal, "Dainty Dazzle Order");
 
@@ -704,7 +714,7 @@ export default function CheckoutPage() {
 
                 <div className="flex justify-between text-sage-muted">
                   <span>Shipping</span>
-                  <span>{shippingFee === 0 ? "FREE" : "₹99"}</span>
+                  <span>{shippingFee === 0 ? "FREE" : `₹${shippingFee}`}</span>
                 </div>
 
                 <div className="flex justify-between text-charcoal text-sm font-medium pt-3 border-t border-sage-border/40">
